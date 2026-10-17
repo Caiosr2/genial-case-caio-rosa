@@ -36,8 +36,7 @@ def desenquadramento(perfil, carteira, compra):
 # FUNÇÃO MAIN
 
 if __name__ == "__main__":
-    import json
-    import pytest
+    import test_codigo
 
     perfil = {"perfil": "Moderado", "score_max_risco": 2.5}
     carteira = [
@@ -47,24 +46,19 @@ if __name__ == "__main__":
     ordem = {"ativo": "FII YYY", "risco": 3.5, "valor_ordem": 5000}
 
     resultado = desenquadramento(perfil, carteira, ordem)
-    print(json.dumps(resultado, ensure_ascii=False, indent=2))
+    print(resultado)
 
     funcoes = ["calculo_risco_atual", "risco_projetado", "desenquadramento"]
 
-    class Contador:
-        def __init__(self):
-            self.resultados = {funcao: [0, 0] for funcao in funcoes}
-
-        def pytest_runtest_logreport(self, report):
-            if report.when == "call":
-                nome_teste = report.nodeid.split("::")[-1]
-                for funcao in funcoes:
-                    if nome_teste.startswith(f"test_{funcao}"):
-                        self.resultados[funcao][1] += 1
-                        if report.passed:
-                            self.resultados[funcao][0] += 1
-
-    contador = Contador()
-    pytest.main(["-q", "test_codigo.py"], plugins=[contador])
-    for funcao, (aprovados, total) in contador.resultados.items():
+    for funcao in funcoes:
+        aprovados = 0
+        total = 0
+        for nome_teste in dir(test_codigo):
+            if nome_teste.startswith(f"test_{funcao}"):
+                total += 1
+                try:
+                    getattr(test_codigo, nome_teste)()
+                    aprovados += 1
+                except AssertionError:
+                    print(f"  falhou: {nome_teste}")
         print(f"{funcao} passou em {aprovados}/{total} testes")
